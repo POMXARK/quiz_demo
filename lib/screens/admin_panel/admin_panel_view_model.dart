@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../models/answer.dart';
 import '../../models/question.dart';
 
@@ -106,5 +110,73 @@ class AdminPanelViewModel extends ChangeNotifier {
     question.lastAnswered = DateTime.now();
     box.put(pair.key, question);
     notifyListeners();
+  }
+
+  Future<void> exportQuestions() async {
+    final box = Hive.box<Question>('questions');
+    final questions = box.values.toList();
+
+    // Создаем список вопросов в формате JSON
+    final jsonQuestions = questions.map((q) {
+      return {
+        'questionText': q.questionText,
+        'answers': q.answers.map((a) => {
+          'answerText': a.answerText,
+          'isCorrect': a.isCorrect,
+        }).toList(),
+        // Добавляем поля для экспорта
+        'correctAnswersCount': q.correctAnswersCount,
+        'totalAnswersCount': q.totalAnswersCount,
+        'lastAnswered': q.lastAnswered?.toIso8601String(),
+      };
+    }).toList();
+
+    // Получаем путь для сохранения файла
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/questions_export.json');
+
+    // Записываем данные в файл
+    await file.writeAsString(jsonEncode(jsonQuestions));
+    print("Questions exported to ${file.path}");
+  }
+
+  Future<void> importQuestions({bool clearExisting = false}) async {
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/questions_export.json');
+
+    if (!await file.exists()) {
+      print("Import file not found");
+      return;
+    }
+
+    final jsonString = await file.readAsString();
+    final List<dynamic> jsonQuestions = jsonDecode(jsonString);
+
+    final box = Hive.box<Question>('questions');
+
+    if (clearExisting) {
+      await box.clear(); // Очистить существующие вопросы, если указано
+    }
+
+    for (var jsonQuestion in jsonQuestions) {
+      final question = Question(
+        questionText: jsonQuestion['questionText'],
+        answers: (jsonQuestion['answers'] as List).map((a) {
+          return Answer(
+            answerText: a['answerText'],
+            isCorrect: a['isCorrect'],
+          );
+        }).toList(),
+        correctAnswersCount: jsonQuestion['correctAnswersCount'],
+        totalAnswersCount: jsonQuestion['totalAnswersCount'],
+        lastAnswered: jsonQuestion['lastAnswered'] != null
+            ? DateTime.parse(jsonQuestion['lastAnswered'])
+            : null,
+      );
+      await box.add(question);
+    }
+
+    loadQuestions(); // Обновляем список вопросов после импорта
+    print("Questions imported from ${file.path}");
   }
 }

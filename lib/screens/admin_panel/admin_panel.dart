@@ -25,6 +25,50 @@ class AdminPanel extends StatelessWidget {
                     onPressed: () => _showAddEditDialog(context, viewModel),
                   ),
                   SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    icon: Icon(Icons.file_upload),
+                    label: Text('Export Questions'),
+                    onPressed: () async {
+                      await viewModel.exportQuestions();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Questions exported successfully')),
+                      );
+                    },
+                  ),
+                  SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    icon: Icon(Icons.file_download),
+                    label: Text('Import Questions'),
+                    onPressed: () async {
+                      // Показываем диалог для выбора опции очистки
+                      bool? clearExisting = await showDialog<bool>(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Import Questions'),
+                            content: Text('Do you want to clear existing questions?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(false),
+                                child: Text('No'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.of(context).pop(true),
+                                child: Text('Yes'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                      if (clearExisting != null) {
+                        await viewModel.importQuestions(clearExisting: clearExisting);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Questions imported successfully')),
+                        );
+                      }
+                    },
+                  ),
+                  SizedBox(height: 16),
                   Expanded(
                     child: viewModel.questions.isEmpty
                         ? Center(child: Text('No questions added yet'))
