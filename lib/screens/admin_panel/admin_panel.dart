@@ -109,7 +109,7 @@ class AdminPanel extends StatelessWidget {
               if (text.isNotEmpty) {
                 setStateDialog(() {
                   answers.add(Answer(answerText: text));
-                  answerController.clear(); // Очищаем поле ввода после добавления
+                  answerController.clear();
                 });
               }
             }
@@ -117,6 +117,12 @@ class AdminPanel extends StatelessWidget {
             void removeAnswer(int index) {
               setStateDialog(() {
                 answers.removeAt(index);
+              });
+            }
+
+            void toggleCorrect(int index, bool? value) {
+              setStateDialog(() {
+                answers[index].isCorrect = value ?? false;
               });
             }
 
@@ -151,9 +157,14 @@ class AdminPanel extends StatelessWidget {
                       Text('No answers added yet', style: TextStyle(color: Colors.grey))
                     else
                       Column(
-                        children: answers.map((answer) {
-                          final index = answers.indexOf(answer);
+                        children: answers.asMap().entries.map((entry) {
+                          final index = entry.key;
+                          final answer = entry.value;
                           return ListTile(
+                            leading: Checkbox(
+                              value: answer.isCorrect,
+                              onChanged: (val) => toggleCorrect(index, val),
+                            ),
                             title: Text(answer.answerText),
                             trailing: IconButton(
                               icon: Icon(Icons.delete, color: Colors.red),
@@ -182,6 +193,13 @@ class AdminPanel extends StatelessWidget {
                     if (answers.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(content: Text('Add at least one answer')),
+                      );
+                      return;
+                    }
+                    // Проверка, что есть хотя бы один правильный ответ
+                    if (!answers.any((a) => a.isCorrect)) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Mark at least one answer as correct')),
                       );
                       return;
                     }

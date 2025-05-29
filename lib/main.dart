@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:quiz_demo/screens/add_todo/add_todo.dart';
 import 'package:quiz_demo/screens/admin_panel/admin_panel.dart';
+import 'package:quiz_demo/screens/home_screen/home_screen.dart';
 import 'models/answer.dart';
 import 'models/question.dart';
 import 'models/todo.dart';
@@ -20,7 +21,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: AdminPanel(),
+      title: 'Quiz App',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: HomeScreen(),
     );
   }
 }
