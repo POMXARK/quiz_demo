@@ -11,6 +11,10 @@ import 'client/hive_names.dart';
 void main() async {
   //   hive initialization
   await Hive.initFlutter();
+
+  // Удаляем все данные из Hive
+  // await Hive.deleteFromDisk();
+
   Hive.registerAdapter(QuestionAdapter());
   Hive.registerAdapter(AnswerAdapter());
   await Hive.openBox<Question>('questions');
